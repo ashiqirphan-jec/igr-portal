@@ -1,0 +1,170 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Faculty & Admin Grievance Dashboard</title>
+  <style>
+    :root { --primary: #0f172a; --accent: #2563eb; --bg: #f8fafc; --card: #ffffff; }
+    body { font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif; background: var(--bg); color: #334155; margin: 0; padding: 20px; }
+    .container { max-width: 1100px; margin: 0 auto; }
+    .card { background: var(--card); border-radius: 8px; box-shadow: 0 4px 6px -1px rgba(0,0,0,0.1); padding: 25px; margin-bottom: 20px; }
+    h2 { color: var(--primary); margin-top: 0; }
+    input, select, textarea { width: 100%; padding: 10px; border: 1px solid #cbd5e1; border-radius: 6px; box-sizing: border-box; margin-bottom: 10px; }
+    button { background: var(--accent); color: white; border: none; padding: 10px 15px; border-radius: 6px; cursor: pointer; font-weight: 600; }
+    table { width: 100%; border-collapse: collapse; margin-top: 15px; }
+    th, td { padding: 12px; border: 1px solid #e2e8f0; text-align: left; font-size: 14px; }
+    th { background: #f1f5f9; font-weight: 600; }
+    .hidden { display: none; }
+    .badge { padding: 3px 8px; border-radius: 4px; font-size: 11px; font-weight: bold; color: white; }
+    .badge-Normal { background: #64748b; } .badge-Urgent { background: #d97706; } .badge-Critical { background: #dc2626; }
+  </style>
+</head>
+<body>
+  <div class="container">
+    <!-- AUTHENTICATION SECTION -->
+    <div id="authSection" class="card" style="max-width: 400px; margin: 50px auto;">
+      <h2>Faculty Login</h2>
+      <div id="emailStep">
+        <input type="email" id="authEmail" placeholder="Enter Official Email ID">
+        <button type="button" style="width: 100%;" onclick="sendOTP()">Send OTP</button>
+      </div>
+      <div id="otpStep" class="hidden">
+        <input type="text" id="authOTP" placeholder="Enter 6-digit OTP">
+        <button type="button" style="width: 100%;" onclick="verifyOTP()">Verify OTP & Login</button>
+      </div>
+    </div>
+
+    <!-- MAIN DASHBOARD -->
+    <div id="dashboardSection" class="hidden">
+      <div class="card" style="display: flex; justify-content: space-between; align-items: center;">
+        <div>
+          <h2>Grievance Action Dashboard</h2>
+          <p style="margin: 0;">Logged in as: <strong id="userEmail"></strong> (<span id="userRole"></span>)</p>
+        </div>
+        <button type="button" onclick="logout()" style="background: #ef4444;">Logout</button>
+      </div>
+
+      <div class="card">
+        <h3>Assigned Grievances</h3>
+        <table id="ticketsTable">
+          <thead>
+            <tr>
+              <th>Ticket ID</th>
+              <th>Student</th>
+              <th>Dept</th>
+              <th>Category</th>
+              <th>Urgency</th>
+              <th>Current Level</th>
+              <th>Action</th>
+            </tr>
+          </thead>
+          <tbody id="ticketsBody"></tbody>
+        </table>
+      </div>
+    </div>
+  </div>
+
+  <script>
+    const API_URL = "https://script.google.com/macros/s/AKfycbwl5jaRW9JWMO64231ZruLuaUkdhgEFkKZrA6rF4pk0mdH7BZPKl-G9cFHauP1rPDkZ/exec";
+    let currentUser = { email: "", role: "" };
+    let advisorsList = [];
+
+    async function sendOTP() {
+      const email = document.getElementById("authEmail").value.trim();
+      if (!email) return alert("Enter email.");
+      const res = await fetch(API_URL, { method: "POST", body: JSON.stringify({ action: "SEND_OTP", email: email }) });
+      const data = await res.json();
+      if (data.result === "success") {
+        document.getElementById("emailStep").classList.add("hidden");
+        document.getElementById("otpStep").classList.remove("hidden");
+      } else alert(data.message);
+    }
+
+    async function verifyOTP() {
+      const email = document.getElementById("authEmail").value.trim();
+      const otp = document.getElementById("authOTP").value.trim();
+      const res = await fetch(API_URL, { method: "POST", body: JSON.stringify({ action: "VERIFY_OTP", email: email, otp: otp }) });
+      const data = await res.json();
+      if (data.result === "success") {
+        currentUser = { email: email, role: data.role };
+        document.getElementById("authSection").classList.add("hidden");
+        document.getElementById("dashboardSection").classList.remove("hidden");
+        document.getElementById("userEmail").innerText = email;
+        document.getElementById("userRole").innerText = data.role;
+        if (data.role === "MEMBER_SECRETARY") fetchAdvisors();
+        loadTickets();
+      } else alert(data.message);
+    }
+
+    async function fetchAdvisors() {
+      const res = await fetch(`${API_URL}?action=GET_ADVISORS_LIST`);
+      const data = await res.json();
+      if (data.result === "success") advisorsList = data.advisors;
+    }
+
+    async function loadTickets() {
+      const res = await fetch(`${API_URL}?action=GET_TICKETS&email=${currentUser.email}`);
+      const data = await res.json();
+      if (data.result === "success") {
+        const tbody = document.getElementById("ticketsBody");
+        tbody.innerHTML = "";
+        data.tickets.forEach(t => {
+          let actionCell = "No Action Required";
+
+          if (t.isActionable) {
+            if (currentUser.role === "MEMBER_SECRETARY") {
+              let options = advisorsList.map(a => `<option value="${a.email}" data-name="${a.name}">${a.name} (${a.department})</option>`).join("");
+              actionCell = `
+                <select id="adv_${t.ticketId}">${options}</select>
+                <button onclick="assignAdvisor('${t.ticketId}')">Assign</button>`;
+            } else {
+              actionCell = `
+                <textarea id="res_${t.ticketId}" placeholder="Enter resolution..."></textarea>
+                <button onclick="resolveTicket('${t.ticketId}')">Resolve</button>`;
+            }
+          }
+
+          tbody.innerHTML += `
+            <tr>
+              <td><strong>${t.ticketId}</strong></td>
+              <td>${t.studentName} (${t.regNumber})</td>
+              <td>${t.department}</td>
+              <td>${t.category}</td>
+              <td><span class="badge badge-${t.urgency}">${t.urgency}</span></td>
+              <td>${t.currentLevel}</td>
+              <td>${actionCell}</td>
+            </tr>`;
+        });
+      }
+    }
+
+    async function assignAdvisor(ticketId) {
+      const select = document.getElementById(`adv_${ticketId}`);
+      const email = select.value;
+      const name = select.options[select.selectedIndex].getAttribute("data-name");
+
+      const res = await fetch(API_URL, {
+        method: "POST",
+        body: JSON.stringify({ action: "ASSIGN_ADVISOR", ticketId: ticketId, advisorName: name, advisorEmail: email })
+      });
+      const data = await res.json();
+      if (data.result === "success") { alert("Advisor Assigned!"); loadTickets(); }
+    }
+
+    async function resolveTicket(ticketId) {
+      const text = document.getElementById(`res_${ticketId}`).value;
+      if (!text) return alert("Resolution text required.");
+
+      const res = await fetch(API_URL, {
+        method: "POST",
+        body: JSON.stringify({ action: "POST_RESOLUTION", ticketId: ticketId, resolutionText: text })
+      });
+      const data = await res.json();
+      if (data.result === "success") { alert("Ticket Resolved!"); loadTickets(); }
+    }
+
+    function logout() { location.reload(); }
+  </script>
+</body>
+</html>
