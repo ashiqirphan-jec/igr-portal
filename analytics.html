@@ -18,14 +18,23 @@
     
     /* Executive Metric Grid */
     .metrics-grid { display: grid; grid-template-columns: repeat(auto-fit, minmax(220px, 1fr)); gap: 15px; margin-bottom: 20px; }
-    .metric-card { background: var(--card); padding: 20px; border-radius: 8px; box-shadow: 0 2px 4px rgba(0,0,0,0.05); text-align: center; border-left: 4px solid var(--accent); }
+    .metric-card { background: var(--card); padding: 20px; border-radius: 8px; box-shadow: 0 2px 4px rgba(0,0,0,0.05); text-align: center; border-left: 4px solid var(--accent); cursor: pointer; transition: transform 0.15s; }
+    .metric-card:hover { transform: translateY(-3px); }
     .metric-card h4 { margin: 0; font-size: 14px; color: #64748b; text-transform: uppercase; }
     .metric-card .value { font-size: 28px; font-weight: bold; color: var(--primary); margin-top: 8px; }
 
     /* Chart Grid Layout */
-    .charts-grid { display: grid; grid-template-columns: repeat(auto-fit, minmax(450px, 1fr)); gap: 20px; }
-    .chart-container { position: relative; height: 300px; width: 100%; }
+    .charts-grid { display: grid; grid-template-columns: repeat(auto-fit, minmax(450px, 1fr)); gap: 20px; margin-bottom: 20px; }
+    .chart-container { position: relative; height: 300px; width: 100%; cursor: pointer; }
     
+    /* Drilldown Table Styling */
+    table { width: 100%; border-collapse: collapse; margin-top: 15px; }
+    th, td { padding: 12px; border: 1px solid #e2e8f0; text-align: left; font-size: 13px; }
+    th { background: #f1f5f9; font-weight: 600; }
+    .badge { padding: 3px 8px; border-radius: 4px; font-size: 11px; font-weight: bold; color: white; display: inline-block; }
+    .badge-Normal { background: #64748b; } .badge-Urgent { background: #d97706; } .badge-Critical { background: #dc2626; }
+    .filter-header { display: flex; justify-content: space-between; align-items: center; background: #e2e8f0; padding: 10px 15px; border-radius: 6px; font-weight: 600; color: #1e293b; }
+
     @media (max-width: 600px) {
       .charts-grid { grid-template-columns: 1fr; }
     }
@@ -63,62 +72,84 @@
 
       <!-- Overview Metrics -->
       <div class="metrics-grid">
-        <div class="metric-card" style="border-left-color: #2563eb;">
+        <div class="metric-card" style="border-left-color: #2563eb;" onclick="filterByMetric('ALL')">
           <h4>Total Grievances</h4>
           <div class="value" id="metricTotal">0</div>
         </div>
-        <div class="metric-card" style="border-left-color: #d97706;">
+        <div class="metric-card" style="border-left-color: #d97706;" onclick="filterByMetric('PENDING')">
           <h4>Pending Resolution</h4>
           <div class="value" id="metricPending">0</div>
         </div>
-        <div class="metric-card" style="border-left-color: #16a34a;">
+        <div class="metric-card" style="border-left-color: #16a34a;" onclick="filterByMetric('RESOLVED')">
           <h4>Resolved Tickets</h4>
           <div class="value" id="metricResolved">0</div>
         </div>
-        <div class="metric-card" style="border-left-color: #dc2626;">
+        <div class="metric-card" style="border-left-color: #dc2626;" onclick="filterByMetric('CRITICAL')">
           <h4>Critical Urgency</h4>
           <div class="value" id="metricCritical">0</div>
         </div>
       </div>
 
-      <!-- Charts Section -->
+      <!-- Interactive Charts Grid -->
       <div class="charts-grid">
         <div class="card">
-          <h3>Grievances by Category</h3>
+          <h3>Grievances by Category <span style="font-size: 12px; color: #64748b; font-weight: normal;">(Click segment to filter)</span></h3>
           <div class="chart-container">
             <canvas id="categoryChart"></canvas>
           </div>
         </div>
 
         <div class="card">
-          <h3>Status Distribution</h3>
+          <h3>Status Distribution <span style="font-size: 12px; color: #64748b; font-weight: normal;">(Click segment to filter)</span></h3>
           <div class="chart-container">
             <canvas id="statusChart"></canvas>
           </div>
         </div>
 
         <div class="card">
-          <h3>Department Wise Breakdown</h3>
+          <h3>Department Wise Breakdown <span style="font-size: 12px; color: #64748b; font-weight: normal;">(Click bar to filter)</span></h3>
           <div class="chart-container">
             <canvas id="departmentChart"></canvas>
           </div>
         </div>
 
         <div class="card">
-          <h3>Urgency Levels</h3>
+          <h3>Urgency Levels <span style="font-size: 12px; color: #64748b; font-weight: normal;">(Click segment to filter)</span></h3>
           <div class="chart-container">
             <canvas id="urgencyChart"></canvas>
           </div>
         </div>
       </div>
-    </div>
 
+      <!-- Interactive Drilldown Table -->
+      <div class="card" id="drilldownCard">
+        <div class="filter-header">
+          <span id="filterLabel">Showing All Grievances</span>
+          <button onclick="renderTable(allTickets, 'All Tickets')" style="width: auto; padding: 4px 12px; margin: 0; background: #64748b; font-size: 12px;">Reset Filter</button>
+        </div>
+        <table id="drilldownTable">
+          <thead>
+            <tr>
+              <th>Ticket ID</th>
+              <th>Student</th>
+              <th>Dept</th>
+              <th>Category</th>
+              <th>Urgency</th>
+              <th>Level</th>
+              <th>Status</th>
+              <th>Attachment</th>
+            </tr>
+          </thead>
+          <tbody id="drilldownBody"></tbody>
+        </table>
+      </div>
+
+    </div>
   </div>
 
   <script>
     const API_URL = "https://script.google.com/macros/s/AKfycbwl5jaRW9JWMO64231ZruLuaUkdhgEFkKZrA6rF4pk0mdH7BZPKl-G9cFHauP1rPDkZ/exec";
     
-    // Allowed Executive Emails
     const ALLOWED_EXECUTIVES = [
       "igrc@jeppiaarcollege.org",
       "principal@jeppiaarcollege.org",
@@ -128,13 +159,14 @@
 
     let currentUser = { email: "", role: "" };
     let chartInstances = {};
+    let allTickets = [];
 
     async function sendOTP() {
       const email = document.getElementById("authEmail").value.trim().toLowerCase();
       if (!email) return alert("Please enter your official email.");
       
       if (!ALLOWED_EXECUTIVES.includes(email)) {
-        return alert("Access Denied: This dashboard is reserved for Executive Management only.");
+        return alert("Access Denied: Reserved for Executive Management only.");
       }
 
       const res = await fetch(API_URL, { method: "POST", body: JSON.stringify({ action: "SEND_OTP", email: email }) });
@@ -153,9 +185,7 @@
       const data = await res.json();
       
       if (data.result === "success") {
-        if (!ALLOWED_EXECUTIVES.includes(email)) {
-          return alert("Access Denied.");
-        }
+        if (!ALLOWED_EXECUTIVES.includes(email)) return alert("Access Denied.");
         
         currentUser = { email: email, role: data.role };
         document.getElementById("authSection").classList.add("hidden");
@@ -172,73 +202,91 @@
       const data = await res.json();
       
       if (data.result === "success" && data.tickets) {
-        processAndRenderCharts(data.tickets);
+        allTickets = data.tickets;
+        processAndRenderCharts(allTickets);
+        renderTable(allTickets, "All Tickets");
       } else {
         alert("Failed to fetch analytics data.");
       }
     }
 
     function processAndRenderCharts(tickets) {
-      // Metric Counters
       let pending = 0, resolved = 0, critical = 0;
       const categories = {}, statuses = {}, departments = {}, urgencies = {};
 
       tickets.forEach(t => {
-        // Status metrics
         if (t.status === "RESOLVED") resolved++;
         else pending++;
 
         if (t.urgency === "Critical") critical++;
 
-        // Aggregations
         categories[t.category] = (categories[t.category] || 0) + 1;
         statuses[t.status] = (statuses[t.status] || 0) + 1;
         departments[t.department] = (departments[t.department] || 0) + 1;
         urgencies[t.urgency] = (urgencies[t.urgency] || 0) + 1;
       });
 
-      // Update KPI Cards
       document.getElementById("metricTotal").innerText = tickets.length;
       document.getElementById("metricPending").innerText = pending;
       document.getElementById("metricResolved").innerText = resolved;
       document.getElementById("metricCritical").innerText = critical;
 
-      // Render Charts
-      createPieChart("categoryChart", Object.keys(categories), Object.values(categories), "Grievances by Category");
-      createDoughnutChart("statusChart", Object.keys(statuses), Object.values(statuses), "Status Breakdown");
-      createBarChart("departmentChart", Object.keys(departments), Object.values(departments), "Department Overview");
-      createPieChart("urgencyChart", Object.keys(urgencies), Object.values(urgencies), "Urgency Levels");
+      createPieChart("categoryChart", Object.keys(categories), Object.values(categories), 'category');
+      createDoughnutChart("statusChart", Object.keys(statuses), Object.values(statuses), 'status');
+      createBarChart("departmentChart", Object.keys(departments), Object.values(departments), 'department');
+      createPieChart("urgencyChart", Object.keys(urgencies), Object.values(urgencies), 'urgency');
     }
 
-    function createPieChart(elementId, labels, data, title) {
+    // Interactive Click Handler for Charts
+    function handleChartClick(event, elements, chart, filterKey) {
+      if (elements.length === 0) return;
+      const index = elements[0].index;
+      const label = chart.data.labels[index];
+      
+      const filtered = allTickets.filter(t => String(t[filterKey]).toLowerCase() === String(label).toLowerCase());
+      renderTable(filtered, `${filterKey.toUpperCase()}: ${label}`);
+    }
+
+    function createPieChart(elementId, labels, data, filterKey) {
       if (chartInstances[elementId]) chartInstances[elementId].destroy();
       const ctx = document.getElementById(elementId).getContext("2d");
+      
       chartInstances[elementId] = new Chart(ctx, {
         type: 'pie',
         data: {
           labels: labels,
           datasets: [{ data: data, backgroundColor: ['#2563eb', '#d97706', '#16a34a', '#dc2626', '#9333ea', '#0891b2'] }]
         },
-        options: { responsive: true, maintainAspectRatio: false }
+        options: { 
+          responsive: true, 
+          maintainAspectRatio: false,
+          onClick: (e, elements) => handleChartClick(e, elements, chartInstances[elementId], filterKey)
+        }
       });
     }
 
-    function createDoughnutChart(elementId, labels, data, title) {
+    function createDoughnutChart(elementId, labels, data, filterKey) {
       if (chartInstances[elementId]) chartInstances[elementId].destroy();
       const ctx = document.getElementById(elementId).getContext("2d");
+      
       chartInstances[elementId] = new Chart(ctx, {
         type: 'doughnut',
         data: {
           labels: labels,
           datasets: [{ data: data, backgroundColor: ['#16a34a', '#d97706', '#dc2626', '#2563eb'] }]
         },
-        options: { responsive: true, maintainAspectRatio: false }
+        options: { 
+          responsive: true, 
+          maintainAspectRatio: false,
+          onClick: (e, elements) => handleChartClick(e, elements, chartInstances[elementId], filterKey)
+        }
       });
     }
 
-    function createBarChart(elementId, labels, data, title) {
+    function createBarChart(elementId, labels, data, filterKey) {
       if (chartInstances[elementId]) chartInstances[elementId].destroy();
       const ctx = document.getElementById(elementId).getContext("2d");
+      
       chartInstances[elementId] = new Chart(ctx, {
         type: 'bar',
         data: {
@@ -248,9 +296,56 @@
         options: { 
           responsive: true, 
           maintainAspectRatio: false,
-          scales: { y: { beginAtZero: true, ticks: { stepSize: 1 } } }
+          scales: { y: { beginAtZero: true, ticks: { stepSize: 1 } } },
+          onClick: (e, elements) => handleChartClick(e, elements, chartInstances[elementId], filterKey)
         }
       });
+    }
+
+    function filterByMetric(type) {
+      let filtered = [];
+      let label = "";
+
+      if (type === 'ALL') { filtered = allTickets; label = "All Grievances"; }
+      else if (type === 'PENDING') { filtered = allTickets.filter(t => t.status !== "RESOLVED"); label = "Pending Grievances"; }
+      else if (type === 'RESOLVED') { filtered = allTickets.filter(t => t.status === "RESOLVED"); label = "Resolved Grievances"; }
+      else if (type === 'CRITICAL') { filtered = allTickets.filter(t => t.urgency === "Critical"); label = "Critical Urgency Grievances"; }
+
+      renderTable(filtered, label);
+    }
+
+    function renderTable(tickets, filterTitle) {
+      document.getElementById("filterLabel").innerText = `Filtered View: ${filterTitle} (${tickets.length} tickets)`;
+      const tbody = document.getElementById("drilldownBody");
+      tbody.innerHTML = "";
+
+      if (tickets.length === 0) {
+        tbody.innerHTML = `<tr><td colspan="8" style="text-align:center; color:#94a3b8;">No matching tickets found.</td></tr>`;
+        return;
+      }
+
+      tickets.forEach(t => {
+        const attachLink = (t.attachmentUrl && t.attachmentUrl !== "No Attachment") 
+          ? `<a href="${t.attachmentUrl}" target="_blank">View File</a>` 
+          : "None";
+
+        tbody.innerHTML += `
+          <tr>
+            <td><strong>${t.ticketId}</strong></td>
+            <td>${t.studentName} (${t.regNumber})</td>
+            <td>${t.department}</td>
+            <td>${t.category}</td>
+            <td><span class="badge badge-${t.urgency}">${t.urgency}</span></td>
+            <td>${t.currentLevel}</td>
+            <td><strong>${t.status}</strong></td>
+            <td>${attachLink}</td>
+          </tr>`;
+      });
+
+      // Scroll smoothly to drilldown section if a chart was clicked
+      if (filterTitle !== "All Tickets") {
+        document.getElementById("drilldownCard").scrollIntoView({ behavior: 'smooth' });
+      }
     }
 
     function logout() { location.reload(); }
