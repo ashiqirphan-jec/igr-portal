@@ -1,0 +1,259 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Grievance Analytics & Executive Insights</title>
+  <!-- Chart.js for Visual Data Representation -->
+  <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+  <style>
+    :root { --primary: #0f172a; --accent: #2563eb; --bg: #f8fafc; --card: #ffffff; }
+    body { font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif; background: var(--bg); color: #334155; margin: 0; padding: 20px; }
+    .container { max-width: 1200px; margin: 0 auto; }
+    .card { background: var(--card); border-radius: 8px; box-shadow: 0 4px 6px -1px rgba(0,0,0,0.1); padding: 20px; margin-bottom: 20px; }
+    h2, h3 { color: var(--primary); margin-top: 0; }
+    input, button { width: 100%; padding: 10px; border: 1px solid #cbd5e1; border-radius: 6px; box-sizing: border-box; margin-bottom: 10px; }
+    button { background: var(--accent); color: white; border: none; font-weight: 600; cursor: pointer; }
+    .hidden { display: none; }
+    
+    /* Executive Metric Grid */
+    .metrics-grid { display: grid; grid-template-columns: repeat(auto-fit, minmax(220px, 1fr)); gap: 15px; margin-bottom: 20px; }
+    .metric-card { background: var(--card); padding: 20px; border-radius: 8px; box-shadow: 0 2px 4px rgba(0,0,0,0.05); text-align: center; border-left: 4px solid var(--accent); }
+    .metric-card h4 { margin: 0; font-size: 14px; color: #64748b; text-transform: uppercase; }
+    .metric-card .value { font-size: 28px; font-weight: bold; color: var(--primary); margin-top: 8px; }
+
+    /* Chart Grid Layout */
+    .charts-grid { display: grid; grid-template-columns: repeat(auto-fit, minmax(450px, 1fr)); gap: 20px; }
+    .chart-container { position: relative; height: 300px; width: 100%; }
+    
+    @media (max-width: 600px) {
+      .charts-grid { grid-template-columns: 1fr; }
+    }
+  </style>
+</head>
+<body>
+  <div class="container">
+    
+    <!-- EXECUTIVE AUTHENTICATION -->
+    <div id="authSection" class="card" style="max-width: 400px; margin: 60px auto;">
+      <h2>Executive Analytics Login</h2>
+      <p style="font-size: 13px; color: #64748b;">Access restricted to Member Secretary, Dean, Principal & Director.</p>
+      
+      <div id="emailStep">
+        <input type="email" id="authEmail" placeholder="Enter Executive Email ID">
+        <button type="button" onclick="sendOTP()">Send Verification Code</button>
+      </div>
+      
+      <div id="otpStep" class="hidden">
+        <input type="text" id="authOTP" placeholder="Enter 6-digit OTP">
+        <button type="button" onclick="verifyOTP()">Authenticate & Open Insights</button>
+      </div>
+    </div>
+
+    <!-- MAIN ANALYTICS DASHBOARD -->
+    <div id="analyticsSection" class="hidden">
+      <!-- Header -->
+      <div class="card" style="display: flex; justify-content: space-between; align-items: center;">
+        <div>
+          <h2>Executive Grievance Analytics</h2>
+          <p style="margin: 0; font-size: 14px;">Logged in as: <strong id="userEmail"></strong> (<span id="userRole"></span>)</p>
+        </div>
+        <button type="button" onclick="logout()" style="background: #ef4444; width: auto; padding: 8px 16px;">Logout</button>
+      </div>
+
+      <!-- Overview Metrics -->
+      <div class="metrics-grid">
+        <div class="metric-card" style="border-left-color: #2563eb;">
+          <h4>Total Grievances</h4>
+          <div class="value" id="metricTotal">0</div>
+        </div>
+        <div class="metric-card" style="border-left-color: #d97706;">
+          <h4>Pending Resolution</h4>
+          <div class="value" id="metricPending">0</div>
+        </div>
+        <div class="metric-card" style="border-left-color: #16a34a;">
+          <h4>Resolved Tickets</h4>
+          <div class="value" id="metricResolved">0</div>
+        </div>
+        <div class="metric-card" style="border-left-color: #dc2626;">
+          <h4>Critical Urgency</h4>
+          <div class="value" id="metricCritical">0</div>
+        </div>
+      </div>
+
+      <!-- Charts Section -->
+      <div class="charts-grid">
+        <div class="card">
+          <h3>Grievances by Category</h3>
+          <div class="chart-container">
+            <canvas id="categoryChart"></canvas>
+          </div>
+        </div>
+
+        <div class="card">
+          <h3>Status Distribution</h3>
+          <div class="chart-container">
+            <canvas id="statusChart"></canvas>
+          </div>
+        </div>
+
+        <div class="card">
+          <h3>Department Wise Breakdown</h3>
+          <div class="chart-container">
+            <canvas id="departmentChart"></canvas>
+          </div>
+        </div>
+
+        <div class="card">
+          <h3>Urgency Levels</h3>
+          <div class="chart-container">
+            <canvas id="urgencyChart"></canvas>
+          </div>
+        </div>
+      </div>
+    </div>
+
+  </div>
+
+  <script>
+    const API_URL = "https://script.google.com/macros/s/AKfycbwl5jaRW9JWMO64231ZruLuaUkdhgEFkKZrA6rF4pk0mdH7BZPKl-G9cFHauP1rPDkZ/exec";
+    
+    // Allowed Executive Emails
+    const ALLOWED_EXECUTIVES = [
+      "igrc@jeppiaarcollege.org",
+      "principal@jeppiaarcollege.org",
+      "dean@jeppiaarcollege.org",
+      "jec.director@jeppiaarcollege.org"
+    ];
+
+    let currentUser = { email: "", role: "" };
+    let chartInstances = {};
+
+    async function sendOTP() {
+      const email = document.getElementById("authEmail").value.trim().toLowerCase();
+      if (!email) return alert("Please enter your official email.");
+      
+      if (!ALLOWED_EXECUTIVES.includes(email)) {
+        return alert("Access Denied: This dashboard is reserved for Executive Management only.");
+      }
+
+      const res = await fetch(API_URL, { method: "POST", body: JSON.stringify({ action: "SEND_OTP", email: email }) });
+      const data = await res.json();
+      if (data.result === "success") {
+        document.getElementById("emailStep").classList.add("hidden");
+        document.getElementById("otpStep").classList.remove("hidden");
+      } else alert(data.message);
+    }
+
+    async function verifyOTP() {
+      const email = document.getElementById("authEmail").value.trim().toLowerCase();
+      const otp = document.getElementById("authOTP").value.trim();
+      
+      const res = await fetch(API_URL, { method: "POST", body: JSON.stringify({ action: "VERIFY_OTP", email: email, otp: otp }) });
+      const data = await res.json();
+      
+      if (data.result === "success") {
+        if (!ALLOWED_EXECUTIVES.includes(email)) {
+          return alert("Access Denied.");
+        }
+        
+        currentUser = { email: email, role: data.role };
+        document.getElementById("authSection").classList.add("hidden");
+        document.getElementById("analyticsSection").classList.remove("hidden");
+        document.getElementById("userEmail").innerText = email;
+        document.getElementById("userRole").innerText = data.role;
+        
+        loadAnalyticsData();
+      } else alert(data.message);
+    }
+
+    async function loadAnalyticsData() {
+      const res = await fetch(`${API_URL}?action=GET_TICKETS&email=${currentUser.email}`);
+      const data = await res.json();
+      
+      if (data.result === "success" && data.tickets) {
+        processAndRenderCharts(data.tickets);
+      } else {
+        alert("Failed to fetch analytics data.");
+      }
+    }
+
+    function processAndRenderCharts(tickets) {
+      // Metric Counters
+      let pending = 0, resolved = 0, critical = 0;
+      const categories = {}, statuses = {}, departments = {}, urgencies = {};
+
+      tickets.forEach(t => {
+        // Status metrics
+        if (t.status === "RESOLVED") resolved++;
+        else pending++;
+
+        if (t.urgency === "Critical") critical++;
+
+        // Aggregations
+        categories[t.category] = (categories[t.category] || 0) + 1;
+        statuses[t.status] = (statuses[t.status] || 0) + 1;
+        departments[t.department] = (departments[t.department] || 0) + 1;
+        urgencies[t.urgency] = (urgencies[t.urgency] || 0) + 1;
+      });
+
+      // Update KPI Cards
+      document.getElementById("metricTotal").innerText = tickets.length;
+      document.getElementById("metricPending").innerText = pending;
+      document.getElementById("metricResolved").innerText = resolved;
+      document.getElementById("metricCritical").innerText = critical;
+
+      // Render Charts
+      createPieChart("categoryChart", Object.keys(categories), Object.values(categories), "Grievances by Category");
+      createDoughnutChart("statusChart", Object.keys(statuses), Object.values(statuses), "Status Breakdown");
+      createBarChart("departmentChart", Object.keys(departments), Object.values(departments), "Department Overview");
+      createPieChart("urgencyChart", Object.keys(urgencies), Object.values(urgencies), "Urgency Levels");
+    }
+
+    function createPieChart(elementId, labels, data, title) {
+      if (chartInstances[elementId]) chartInstances[elementId].destroy();
+      const ctx = document.getElementById(elementId).getContext("2d");
+      chartInstances[elementId] = new Chart(ctx, {
+        type: 'pie',
+        data: {
+          labels: labels,
+          datasets: [{ data: data, backgroundColor: ['#2563eb', '#d97706', '#16a34a', '#dc2626', '#9333ea', '#0891b2'] }]
+        },
+        options: { responsive: true, maintainAspectRatio: false }
+      });
+    }
+
+    function createDoughnutChart(elementId, labels, data, title) {
+      if (chartInstances[elementId]) chartInstances[elementId].destroy();
+      const ctx = document.getElementById(elementId).getContext("2d");
+      chartInstances[elementId] = new Chart(ctx, {
+        type: 'doughnut',
+        data: {
+          labels: labels,
+          datasets: [{ data: data, backgroundColor: ['#16a34a', '#d97706', '#dc2626', '#2563eb'] }]
+        },
+        options: { responsive: true, maintainAspectRatio: false }
+      });
+    }
+
+    function createBarChart(elementId, labels, data, title) {
+      if (chartInstances[elementId]) chartInstances[elementId].destroy();
+      const ctx = document.getElementById(elementId).getContext("2d");
+      chartInstances[elementId] = new Chart(ctx, {
+        type: 'bar',
+        data: {
+          labels: labels,
+          datasets: [{ label: 'Tickets', data: data, backgroundColor: '#2563eb' }]
+        },
+        options: { 
+          responsive: true, 
+          maintainAspectRatio: false,
+          scales: { y: { beginAtZero: true, ticks: { stepSize: 1 } } }
+        }
+      });
+    }
+
+    function logout() { location.reload(); }
+  </script>
+</body>
+</html>
