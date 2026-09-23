@@ -3,215 +3,197 @@
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <title>Student Grievance Redressal Portal</title>
+  <title>Institutional Grievance Redressal Portal</title>
   <style>
-    :root { --primary: #1e3a8a; --accent: #2563eb; --bg: #f8fafc; --card: #ffffff; --text: #1e293b; }
-    body { font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif; background: var(--bg); color: var(--text); margin: 0; padding: 20px; }
-    .container { max-width: 800px; margin: 0 auto; }
-    .card { background: var(--card); border-radius: 8px; box-shadow: 0 4px 6px -1px rgba(0,0,0,0.1); padding: 30px; margin-bottom: 20px; }
-    h2 { color: var(--primary); margin-top: 0; }
-    .form-group { margin-bottom: 15px; }
-    label { display: block; font-weight: 600; margin-bottom: 5px; }
-    input, select, textarea { width: 100%; padding: 10px; border: 1px solid #cbd5e1; border-radius: 6px; box-sizing: border-box; }
-    button { background: var(--accent); color: white; border: none; padding: 12px 20px; border-radius: 6px; font-weight: 600; cursor: pointer; width: 100%; }
-    button:hover { background: var(--primary); }
-    .tab-btn { background: #e2e8f0; color: #475569; padding: 10px 20px; width: auto; display: inline-block; margin-right: 5px; }
-    .tab-btn.active { background: var(--primary); color: white; }
-    .badge { display: inline-block; padding: 4px 8px; border-radius: 4px; font-weight: bold; font-size: 12px; color: white; background: #64748b; }
-    .status-RESOLVED { background: #16a34a; }
-    .status-PENDING_HANDLER { background: #d97706; }
-    .status-PENDING_ASSIGNMENT { background: #dc2626; }
+    :root { --primary: #0f172a; --accent: #2563eb; --bg: #f8fafc; --card: #ffffff; }
+    body { font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif; background: var(--bg); color: #334155; margin: 0; padding: 20px; }
+    .container { max-width: 650px; margin: 30px auto; }
+    .card { background: var(--card); border-radius: 8px; box-shadow: 0 4px 6px -1px rgba(0,0,0,0.1); padding: 30px; }
+    h2 { color: var(--primary); margin-top: 0; border-bottom: 2px solid #e2e8f0; padding-bottom: 10px; }
+    label { font-weight: 600; font-size: 13px; color: #475569; display: block; margin-top: 12px; margin-bottom: 4px; }
+    input, select, textarea, button { width: 100%; padding: 10px; border: 1px solid #cbd5e1; border-radius: 6px; box-sizing: border-box; font-size: 14px; }
+    textarea { resize: vertical; height: 100px; }
+    button { background: var(--accent); color: white; border: none; font-weight: 600; margin-top: 20px; cursor: pointer; transition: background 0.2s; }
+    button:hover { background: #1d4ed8; }
+    .row { display: grid; grid-template-columns: 1fr 1fr; gap: 15px; }
     .hidden { display: none; }
+    .status-box { margin-top: 20px; padding: 15px; border-radius: 6px; font-weight: 600; text-align: center; }
+    .success { background: #dcfce7; color: #15803d; border: 1px solid #bbf7d0; }
+    .error { background: #fee2e2; color: #b91c1c; border: 1px solid #fecaca; }
   </style>
 </head>
 <body>
   <div class="container">
-    <div style="margin-bottom: 20px;">
-      <button type="button" class="tab-btn active" id="tabSubmitBtn" onclick="showTab('submit')">Submit Grievance</button>
-      <button type="button" class="tab-btn" id="tabTrackBtn" onclick="showTab('track')">Track Grievance</button>
-    </div>
-
-    <!-- SUBMIT GRIEVANCE SECTION -->
-    <div id="submitSection" class="card">
+    <div class="card">
       <h2>Submit a Grievance</h2>
-      <form id="grievanceForm">
-        <div class="form-group"><label>Full Name</label><input type="text" id="name" required></div>
-        <div class="form-group"><label>Email Address</label><input type="email" id="email" required></div>
-        <div class="form-group"><label>Register Number</label><input type="text" id="regNumber" required></div>
-        <div style="display: flex; gap: 10px;">
-          <div class="form-group" style="flex: 1;">
-            <label>Year of Study</label>
-            <select id="yearOfStudy" required>
-              <option value="1st Year">1st Year</option>
-              <option value="2nd Year">2nd Year</option>
-              <option value="3rd Year">3rd Year</option>
-              <option value="4th Year">4th Year</option>
+      <form id="grievanceForm" onsubmit="handleFormSubmit(event)">
+        
+        <div class="row">
+          <div>
+            <label for="studentName">Full Name *</label>
+            <input type="text" id="studentName" required placeholder="Enter full name">
+          </div>
+          <div>
+            <label for="regNumber">Register Number *</label>
+            <input type="text" id="regNumber" required placeholder="e.g. 311120104001">
+          </div>
+        </div>
+
+        <div class="row">
+          <div>
+            <label for="studentEmail">Official/Personal Email *</label>
+            <input type="email" id="studentEmail" required placeholder="student@example.com">
+          </div>
+          <div>
+            <label for="department">Department *</label>
+            <select id="department" required>
+              <option value="">Select Department</option>
+              <option value="CSE">Computer Science & Engineering</option>
+              <option value="ECE">Electronics & Communication</option>
+              <option value="EEE">Electrical & Electronics</option>
+              <option value="MECH">Mechanical Engineering</option>
+              <option value="CIVIL">Civil Engineering</option>
+              <option value="IT">Information Technology</option>
+              <option value="AIDS">AI & Data Science</option>
             </select>
           </div>
-          <div class="form-group" style="flex: 1;"><label>Section</label><input type="text" id="section" placeholder="e.g. A" required></div>
         </div>
-        <div class="form-group"><label>Department</label><input type="text" id="department" placeholder="e.g. CSE" required></div>
-        <div class="form-group">
-          <label>Category</label>
-          <select id="category" required>
-            <option value="Academic">Academic</option>
-            <option value="Infrastructure">Infrastructure</option>
-            <option value="Hostel & Mess">Hostel & Mess</option>
-            <option value="Examinations">Examinations</option>
-            <option value="Other">Other</option>
-          </select>
+
+        <div class="row">
+          <div>
+            <label for="studentStatus">Student Status *</label>
+            <select id="studentStatus" required onchange="toggleAlumniField()">
+              <option value="Current Student">Current Student</option>
+              <option value="Alumni">Alumni</option>
+            </select>
+          </div>
+          <div id="passingYearContainer" class="hidden">
+            <label for="passingYear">Year of Passing *</label>
+            <input type="number" id="passingYear" placeholder="e.g. 2024" min="1990" max="2026">
+          </div>
         </div>
-        <div class="form-group">
-          <label>Urgency Level</label>
-          <select id="urgency" required>
-            <option value="Normal">Normal</option>
-            <option value="Urgent">Urgent</option>
-            <option value="Critical">Critical</option>
-          </select>
+
+        <div class="row">
+          <div>
+            <label for="category">Grievance Category *</label>
+            <select id="category" required>
+              <option value="">Select Category</option>
+              <option value="Academic">Academic</option>
+              <option value="Examinations">Examinations & Evaluation</option>
+              <option value="Hostel & Food">Hostel & Food Services</option>
+              <option value="Transport">Transport Facility</option>
+              <option value="Infrastructure">Infrastructure & Labs</option>
+              <option value="Finance & Fees">Finance & Fees</option>
+              <option value="Disciplinary / Harassment">Disciplinary / Harassment</option>
+              <option value="Other">Other</option>
+            </select>
+          </div>
+          <div>
+            <label for="urgency">Urgency Level *</label>
+            <select id="urgency" required>
+              <option value="Normal">Normal</option>
+              <option value="Urgent">Urgent</option>
+              <option value="Critical">Critical</option>
+            </select>
+          </div>
         </div>
-        <div class="form-group"><label>Description</label><textarea id="description" rows="5" required></textarea></div>
-        <div class="form-group"><label>Attachment (Optional)</label><input type="file" id="fileInput"></div>
-        <button type="submit" id="submitBtn">Submit Ticket</button>
+
+        <label for="description">Grievance Description *</label>
+        <textarea id="description" required placeholder="Provide a detailed explanation of your issue..."></textarea>
+
+        <label for="attachment">Attachment / Evidence (Optional - Max 5MB)</label>
+        <input type="file" id="attachment" accept="image/*,.pdf,.doc,.docx">
+
+        <button type="submit" id="submitBtn">Submit Grievance</button>
       </form>
-    </div>
 
-    <!-- TRACK TICKET SECTION -->
-    <div id="trackSection" class="card hidden">
-      <h2>Track Your Grievance</h2>
-      <div class="form-group" style="display: flex; gap: 10px;">
-        <input type="text" id="trackTicketId" placeholder="Enter Ticket ID (e.g., GRV-123456)">
-        <button type="button" style="width: 150px;" onclick="trackTicket()">Track</button>
-      </div>
-      <div id="ticketResult" class="hidden" style="margin-top: 20px; border-top: 1px solid #cbd5e1; padding-top: 20px;">
-        <h3>Ticket Details: <span id="resTicketId"></span></h3>
-        <p><strong>Status:</strong> <span id="resStatus" class="badge"></span></p>
-        <p><strong>Category:</strong> <span id="resCategory"></span> | <strong>Department:</strong> <span id="resDept"></span></p>
-        <p><strong>Description:</strong> <span id="resDesc"></span></p>
-        <div id="resolutionBox" class="hidden" style="background: #f0fdf4; border: 1px solid #bbf7d0; padding: 15px; border-radius: 6px; margin-top: 15px;">
-          <h4 style="margin-top: 0; color: #166534;">Resolution Provided:</h4>
-          <p id="resText"></p>
-        </div>
-
-        <div id="feedbackBox" class="hidden" style="margin-top: 20px;">
-          <h4>Submit Resolution Feedback</h4>
-          <textarea id="feedbackText" placeholder="Enter your feedback on how your grievance was handled..."></textarea>
-          <button type="button" onclick="submitFeedback()" style="margin-top: 10px;">Submit Feedback</button>
-        </div>
-      </div>
+      <div id="statusMessage" class="status-box hidden"></div>
     </div>
   </div>
 
   <script>
     const API_URL = "https://script.google.com/macros/s/AKfycbwl5jaRW9JWMO64231ZruLuaUkdhgEFkKZrA6rF4pk0mdH7BZPKl-G9cFHauP1rPDkZ/exec";
 
-    function showTab(tab) {
-      document.getElementById("submitSection").classList.toggle("hidden", tab !== 'submit');
-      document.getElementById("trackSection").classList.toggle("hidden", tab !== 'track');
-      document.getElementById("tabSubmitBtn").classList.toggle("active", tab === 'submit');
-      document.getElementById("tabTrackBtn").classList.toggle("active", tab === 'track');
+    function toggleAlumniField() {
+      const status = document.getElementById("studentStatus").value;
+      const yearContainer = document.getElementById("passingYearContainer");
+      const passingYearInput = document.getElementById("passingYear");
+
+      if (status === "Alumni") {
+        yearContainer.classList.remove("hidden");
+        passingYearInput.setAttribute("required", "true");
+      } else {
+        yearContainer.classList.add("hidden");
+        passingYearInput.removeAttribute("required");
+        passingYearInput.value = "";
+      }
     }
 
-    // Auto load ticket ID from URL param if available
-    window.onload = function() {
-      const urlParams = new URLSearchParams(window.location.search);
-      const ticketId = urlParams.get('ticketId');
-      if (ticketId) {
-        showTab('track');
-        document.getElementById('trackTicketId').value = ticketId;
-        trackTicket();
-      }
-    };
-
-    document.getElementById("grievanceForm").addEventListener("submit", async function(e) {
+    async function handleFormSubmit(e) {
       e.preventDefault();
-      document.getElementById("submitBtn").disabled = true;
-      document.getElementById("submitBtn").innerText = "Submitting...";
+      const submitBtn = document.getElementById("submitBtn");
+      const statusMsg = document.getElementById("statusMessage");
 
-      const fileInput = document.getElementById("fileInput");
-      let fileData = null;
-
-      if (fileInput.files.length > 0) {
-        const file = fileInput.files[0];
-        const base64 = await convertBase64(file);
-        fileData = { fileName: file.name, mimeType: file.type, base64: base64 };
-      }
-
-      const payload = {
-        action: "SUBMIT_GRIEVANCE",
-        name: document.getElementById("name").value,
-        email: document.getElementById("email").value,
-        regNumber: document.getElementById("regNumber").value,
-        yearOfStudy: document.getElementById("yearOfStudy").value,
-        section: document.getElementById("section").value,
-        department: document.getElementById("department").value,
-        category: document.getElementById("category").value,
-        urgency: document.getElementById("urgency").value,
-        description: document.getElementById("description").value,
-        fileData: fileData
-      };
+      submitBtn.disabled = true;
+      submitBtn.innerText = "Submitting...";
+      statusMsg.className = "status-box hidden";
 
       try {
-        const res = await fetch(API_URL, { method: "POST", body: JSON.stringify(payload) });
-        const data = await res.json();
-        if (data.result === "success") {
-          alert("Grievance submitted successfully! Ticket ID: " + data.ticketId);
+        let attachmentData = null;
+        const fileInput = document.getElementById("attachment");
+
+        if (fileInput.files.length > 0) {
+          const file = fileInput.files[0];
+          attachmentData = await convertFileToBase64(file);
+        }
+
+        const payload = {
+          action: "SUBMIT_GRIEVANCE",
+          studentName: document.getElementById("studentName").value.trim(),
+          regNumber: document.getElementById("regNumber").value.trim(),
+          studentEmail: document.getElementById("studentEmail").value.trim(),
+          department: document.getElementById("department").value,
+          studentStatus: document.getElementById("studentStatus").value,
+          passingYear: document.getElementById("passingYear").value.trim() || "N/A",
+          category: document.getElementById("category").value,
+          urgency: document.getElementById("urgency").value,
+          description: document.getElementById("description").value.trim(),
+          attachment: attachmentData
+        };
+
+        const response = await fetch(API_URL, {
+          method: "POST",
+          body: JSON.stringify(payload)
+        });
+
+        const result = await response.json();
+
+        if (result.result === "success") {
+          statusMsg.innerText = `Grievance submitted successfully! Your Ticket ID is: ${result.ticketId}`;
+          statusMsg.className = "status-box success";
           document.getElementById("grievanceForm").reset();
+          toggleAlumniField();
         } else {
-          alert("Error: " + data.message);
+          throw new Error(result.message || "Failed to submit grievance.");
         }
-      } catch (err) { alert("Submission failed: " + err); }
-      finally {
-        document.getElementById("submitBtn").disabled = false;
-        document.getElementById("submitBtn").innerText = "Submit Ticket";
+      } catch (err) {
+        statusMsg.innerText = `Error: ${err.message}`;
+        statusMsg.className = "status-box error";
+      } finally {
+        submitBtn.disabled = false;
+        submitBtn.innerText = "Submit Grievance";
       }
-    });
-
-    async function trackTicket() {
-      const ticketId = document.getElementById("trackTicketId").value.trim();
-      if (!ticketId) return alert("Please enter a Ticket ID.");
-
-      const res = await fetch(`${API_URL}?action=TRACK_TICKET&ticketId=${ticketId}`);
-      const data = await res.json();
-
-      if (data.result === "success") {
-        const t = data.ticket;
-        document.getElementById("ticketResult").classList.remove("hidden");
-        document.getElementById("resTicketId").innerText = t.ticketId;
-        document.getElementById("resStatus").innerText = t.status;
-        document.getElementById("resStatus").className = `badge status-${t.status}`;
-        document.getElementById("resCategory").innerText = t.category;
-        document.getElementById("resDept").innerText = t.department;
-        document.getElementById("resDesc").innerText = t.description;
-
-        if (t.status === "RESOLVED") {
-          document.getElementById("resolutionBox").classList.remove("hidden");
-          document.getElementById("resText").innerText = t.resolutionText;
-          document.getElementById("feedbackBox").classList.remove("hidden");
-        } else {
-          document.getElementById("resolutionBox").classList.add("hidden");
-          document.getElementById("feedbackBox").classList.add("hidden");
-        }
-      } else { alert("Ticket not found."); }
     }
 
-    async function submitFeedback() {
-      const ticketId = document.getElementById("resTicketId").innerText;
-      const feedback = document.getElementById("feedbackText").value;
-      if (!feedback) return alert("Please enter feedback.");
-
-      const res = await fetch(API_URL, {
-        method: "POST",
-        body: JSON.stringify({ action: "SUBMIT_FEEDBACK", ticketId: ticketId, feedback: feedback })
-      });
-      const data = await res.json();
-      if (data.result === "success") alert("Thank you for your feedback!");
-    }
-
-    function convertBase64(file) {
+    function convertFileToBase64(file) {
       return new Promise((resolve, reject) => {
         const reader = new FileReader();
         reader.readAsDataURL(file);
-        reader.onload = () => resolve(reader.result);
+        reader.onload = () => resolve({
+          base64: reader.result.split(',')[1],
+          name: file.name,
+          type: file.type
+        });
         reader.onerror = error => reject(error);
       });
     }
