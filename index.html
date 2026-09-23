@@ -22,6 +22,9 @@
     .status-PENDING_HANDLER { background: #d97706; }
     .status-PENDING_ASSIGNMENT { background: #dc2626; }
     .hidden { display: none !important; }
+    .detail-grid { display: grid; grid-template-columns: repeat(2, 1fr); gap: 12px; background: #f1f5f9; padding: 15px; border-radius: 6px; margin-top: 15px; }
+    .detail-item { font-size: 14px; }
+    .detail-item strong { color: #334155; }
   </style>
 </head>
 <body>
@@ -68,21 +71,11 @@
             <label>Section</label>
             <select id="section" required>
               <option value="">Select Section</option>
-              <option value="A">A</option>
-              <option value="B">B</option>
-              <option value="C">C</option>
-              <option value="D">D</option>
-              <option value="E">E</option>
-              <option value="F">F</option>
-              <option value="G">G</option>
-              <option value="H">H</option>
-              <option value="I">I</option>
-              <option value="J">J</option>
-              <option value="K">K</option>
-              <option value="L">L</option>
-              <option value="M">M</option>
-              <option value="N">N</option>
-              <option value="O">O</option>
+              <option value="A">A</option><option value="B">B</option><option value="C">C</option>
+              <option value="D">D</option><option value="E">E</option><option value="F">F</option>
+              <option value="G">G</option><option value="H">H</option><option value="I">I</option>
+              <option value="J">J</option><option value="K">K</option><option value="L">L</option>
+              <option value="M">M</option><option value="N">N</option><option value="O">O</option>
             </select>
           </div>
         </div>
@@ -147,8 +140,19 @@
       <div id="ticketResult" class="hidden" style="margin-top: 20px; border-top: 1px solid #cbd5e1; padding-top: 20px;">
         <h3>Ticket Details: <span id="resTicketId"></span></h3>
         <p><strong>Status:</strong> <span id="resStatus" class="badge"></span></p>
-        <p><strong>Category:</strong> <span id="resCategory"></span> | <strong>Department:</strong> <span id="resDept"></span></p>
-        <p><strong>Description:</strong> <span id="resDesc"></span></p>
+
+        <div class="detail-grid">
+          <div class="detail-item"><strong>Assigned Advisor:</strong> <span id="resAdvisor">Not Assigned Yet</span></div>
+          <div class="detail-item"><strong>Date Submitted:</strong> <span id="resTimestamp">N/A</span></div>
+          <div class="detail-item"><strong>Category:</strong> <span id="resCategory"></span></div>
+          <div class="detail-item"><strong>Department:</strong> <span id="resDept"></span></div>
+          <div class="detail-item"><strong>Urgency Level:</strong> <span id="resUrgency">Normal</span></div>
+          <div class="detail-item"><strong>Student Type:</strong> <span id="resStudentType">N/A</span></div>
+        </div>
+
+        <p style="margin-top: 15px;"><strong>Description:</strong></p>
+        <div id="resDesc" style="background: #ffffff; border: 1px solid #e2e8f0; padding: 12px; border-radius: 6px; font-size: 14px;"></div>
+
         <div id="resolutionBox" class="hidden" style="background: #f0fdf4; border: 1px solid #bbf7d0; padding: 15px; border-radius: 6px; margin-top: 15px;">
           <h4 style="margin-top: 0; color: #166534;">Resolution Provided:</h4>
           <p id="resText"></p>
@@ -269,16 +273,20 @@
       if (data.result === "success") {
         const t = data.ticket;
         document.getElementById("ticketResult").classList.remove("hidden");
-        document.getElementById("resTicketId").innerText = t.ticketId;
-        document.getElementById("resStatus").innerText = t.status;
+        document.getElementById("resTicketId").innerText = t.ticketId || ticketId;
+        document.getElementById("resStatus").innerText = t.status || "PENDING";
         document.getElementById("resStatus").className = `badge status-${t.status}`;
-        document.getElementById("resCategory").innerText = t.category;
-        document.getElementById("resDept").innerText = t.department;
-        document.getElementById("resDesc").innerText = t.description;
+        document.getElementById("resAdvisor").innerText = t.advisor || t.handler || t.assignedTo || "Pending Assignment";
+        document.getElementById("resTimestamp").innerText = t.timestamp ? new Date(t.timestamp).toLocaleString() : "N/A";
+        document.getElementById("resCategory").innerText = t.category || "N/A";
+        document.getElementById("resDept").innerText = t.department || "N/A";
+        document.getElementById("resUrgency").innerText = t.urgency || "Normal";
+        document.getElementById("resStudentType").innerText = t.studentType || "Current Student";
+        document.getElementById("resDesc").innerText = t.description || "N/A";
 
         if (t.status === "RESOLVED") {
           document.getElementById("resolutionBox").classList.remove("hidden");
-          document.getElementById("resText").innerText = t.resolutionText;
+          document.getElementById("resText").innerText = t.resolutionText || "Resolution complete.";
           document.getElementById("feedbackBox").classList.remove("hidden");
         } else {
           document.getElementById("resolutionBox").classList.add("hidden");
